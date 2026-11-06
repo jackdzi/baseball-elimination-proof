@@ -1,0 +1,12 @@
+_ > nanoagent.plugin.v0001.ProductConfig:
+tagline: "Find which teams are mathematically out of the pennant race, and prove it"
+summary: "Pick a seed and a division size and the agent gets a late-season baseball division: wins, losses, and the games every team still has left. It works out which teams can no longer finish first, even tied, and backs each one with a certificate, a group of rivals who must win too many games among themselves. A deterministic checker runs its own maximum flow for every team and checks every certificate with exact fractions."
+highlights:
+  - "The classic max-flow elimination problem from algorithms courses, as an agent task"
+  - "Some eliminations are obvious, others need a group of three or four rivals to prove"
+  - "Any valid certificate passes: the checker tests the inequality, not a stored answer"
+  - "A team that can still tie for first counts as alive, exactly as the rule says"
+steps:
+  - "Ask for a division of 4 to 8 teams and a seed"
+  - "The agent reads the standings and tests groups of rivals with the bound tool"
+  - "See every team judged, each elimination with its proof, and the verdict team by team"

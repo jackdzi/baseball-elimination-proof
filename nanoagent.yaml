@@ -1,0 +1,38 @@
+_ > nanoagent.plugin.v0001.ManifestConfig:
+id: baseball-elimination-proof
+name: Baseball Elimination Proof
+version: 0.1.0
+status: ready
+spec: nanoagent.plugin/v0001
+
+runtime > nanoagent.plugin.v0001.RuntimeConfig:
+  type: mcp_stdio
+  command: [uv, run, --frozen, python, -m, plugin]
+
+permissions > nanoagent.plugin.v0001.PermissionsConfig:
+  network > nanoagent.plugin.v0001.NetworkConfig:
+    hosts: []
+  filesystem > nanoagent.plugin.v0001.FilesystemConfig:
+    write: [workspace]
+
+# One entry per contract.Tool; its input and output classes are contract.TOOLS's.
+tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
+  get_standings:
+    description: Get the division's standings, each team's wins, losses, games left inside and outside the division and best possible wins, and the games left between each pair of teams
+  subset_bound:
+    description: For a team and a group R of other teams, give the team's best possible wins, R's wins, the games R's teams play among themselves, the bound (wins + games among) / |R| as a reduced fraction, and whether the bound is greater than the team's best
+  pin_eliminations:
+    description: Pin the division and its eliminated teams, each with the certificate a minimum cut gives, the task's answer key
+
+# One entry per contract.Task; its input class is contract.TASKS's.
+tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
+  find-eliminated:
+    description: Find every team of a baseball division that is mathematically eliminated from first place, and prove each one with a certificate
+    runner: agent
+    tools: [get_standings, subset_bound]
+    reference: pin_eliminations
+    instructions: |-
+      Rules. A team is eliminated when it cannot finish with the most wins, even tied for the most, whatever the results of the games left. Its best finish is max_wins (its wins plus every game it has left). Team x is eliminated exactly when some group R of other teams has (the wins of R's teams + the games R's teams still play among themselves) / |R| strictly greater than x's max_wins: those teams must share those wins, so one of them ends ahead of x. R is the certificate. A team whose best finish only ties a rival is not eliminated. Games against teams outside the division count toward max_wins but never toward R.
+      Plan. (1) get_standings once, with the task input copied exactly. (2) For every team, decide; when a rival's wins alone are greater than its max_wins, it is eliminated with that rival as R (use the rival with the most wins). (3) For every other team, test groups with subset_bound: R made of the rivals with the most wins, adding one at a time (top 2, top 3, ...), and groups of rivals that still play each other many games. Put many subset_bound calls in one step. (4) submit.
+      Certificates. Every certificate you submit for a team must be the subset of one subset_bound call for that team that returned beats true, or a single rival whose wins are greater than its max_wins. A team for which no group you can find beats its max_wins is alive.
+      Submit. eliminated: one entry per eliminated team with its certificate (team names exactly as get_standings gives them); alive: every other team. Every team appears exactly once. Keep reasoning short: one line per team.
